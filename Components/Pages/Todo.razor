@@ -24,13 +24,22 @@
         <ul class="todo-list">
             @foreach (var todo in todos){
                 <li class="todo-item">
-                    <input type="checkbox" checked=@todo.IsDone @onchange="async e => {
-                        todo.IsDone = (bool?)e.Value ?? false;
-                    }"/>
-                    <input value="@todo.Title" @onchange="async e => {
-                        todo.Title = (string?)e.Value?.ToString() ?? string.Empty;
-                    }"/>
-                    <!-- <button @onclick="() => RemoveTodo(todo)">Remove</button> -->
+                    <input id="@todo.Id" 
+                        type="checkbox" 
+                        checked=@todo.IsDone 
+                        @onchange="async e => {
+                            todo.IsDone = (bool?)e.Value ?? false;
+                        }"
+                        />
+                    <div class="todo-details">
+                        <p>@todo.Title (Priority: @todo.Priority)</p>
+                        <p>Category: @todo.Category</p>
+                        <p>Due on: @todo.Deadline.Date</p>
+                    </div>
+                    <div class="action-btn-gp">
+                        <button>Edit</button>
+                        <button>Delete</button>
+                    </div>
                 </li>
             }
         </ul>
