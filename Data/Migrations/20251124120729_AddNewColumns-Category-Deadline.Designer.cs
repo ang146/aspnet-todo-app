@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using TodoApp.Data;
 
@@ -10,9 +11,11 @@ using TodoApp.Data;
 namespace TodoApp.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251124120729_AddNewColumns-Category-Deadline")]
+    partial class AddNewColumnsCategoryDeadline
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "9.0.9");
@@ -230,7 +233,7 @@ namespace TodoApp.Migrations
                     b.Property<bool>("IsDone")
                         .HasColumnType("INTEGER");
 
-                    b.Property<int>("Priority")
+                    b.Property<uint>("Priority")
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("Title")

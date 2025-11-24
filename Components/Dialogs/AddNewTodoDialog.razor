@@ -1,0 +1,42 @@
+﻿@using TodoApp.Models
+
+<MudDialog>
+    <TitleContent>
+        <MudText Typo="Typo.h6">
+            <MudIcon Icon="@Icons.Material.Filled.AddBox" Class="mr-3 mb-n1" />
+            Add new Todo Item
+        </MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudTextField @bind-Value="@Item.Title" Label="Title: " Required />
+        <MudNumericField @bind-Value="@Item.Priority" Label="Priority: " Max="10" Min="0" Required />
+        <MudSelect @bind-Value="@Item.Category" Label="Category: " Placeholder="Please Select" OpenIcon="@Icons.Material.Filled.Category" Required>
+            @foreach (TodoApp.Enums.Category item in Enum.GetValues(typeof(TodoApp.Enums.Category)))
+            {
+                <MudSelectItem Value="@item">@item</MudSelectItem>
+            }
+        </MudSelect>
+
+        <MudDatePicker @bind-Value="@Item.Deadline" Label="Deadline: " Editable="true" Required />
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+        <MudButton Color="Color.Success" OnClick="Confirm">Add Item</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter]
+    private IMudDialogInstance MudDialog { get; set; }
+
+    [Parameter]
+    public ITodoItemState Item { get; set; }
+
+    private void Cancel() => MudDialog.Cancel();
+
+    private void Confirm()
+    {
+        // TODO: Validation for item required fields?
+        MudDialog.Close(DialogResult.Ok(Item));
+    }
+}

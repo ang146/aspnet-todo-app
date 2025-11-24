@@ -4,7 +4,11 @@ using Microsoft.EntityFrameworkCore;
 using TodoApp.Components;
 using TodoApp.Components.Account;
 using TodoApp.Data;
+using TodoApp.Factories;
+using TodoApp.Mappers;
+using TodoApp.Models;
 using TodoApp.Services;
+using MudBlazor.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -36,6 +40,11 @@ builder.Services.AddIdentityCore<ApplicationUser>(options => options.SignIn.Requ
 
 builder.Services.AddSingleton<IEmailSender<ApplicationUser>, IdentityNoOpEmailSender>();
 builder.Services.AddScoped<ITodoService, TodoService>();
+builder.Services.AddScoped<ITodoItemMapper, TodoItemMapper>();
+builder.Services.AddScoped<ITodoItemState, TodoItemState>();
+builder.Services.AddScoped<ITodoItemFactory, TodoItemFactory>();
+
+builder.Services.AddMudServices();
 
 var app = builder.Build();
 

@@ -1,8 +1,10 @@
 ﻿@page "/todo"
 @using Microsoft.AspNetCore.Identity
+@using TodoApp.Factories
 @using TodoApp.Services
 @using TodoApp.Data
 @using Microsoft.AspNetCore.Authorization
+@using TodoApp.Enums
 @rendermode InteractiveServer
 @attribute [Authorize]
 
@@ -10,78 +12,32 @@
 
 <AuthorizeView>
     <h1>Hello @context.User.Identity?.Name! You have @todos.Count(t=> !t.IsDone) todos left.</h1>
-    <ul>
-        @foreach (var todo in todos){
-            <li>
-                <input type="checkbox" checked=@todo.IsDone @onchange="async e => {
-                    todo.IsDone = (bool?)e.Value ?? false;
-                    await UpdateTodo(todo);
-                }"/>
-                <input value="@todo.Title" @onchange="async e => {
-                    todo.Title = (string?)e.Value?.ToString() ?? string.Empty;
-                    await UpdateTodo(todo);
-                }"/>
-                <button @onclick="() => RemoveTodo(todo)">Remove</button>
-            </li>
-        }
-    </ul>
-
-    <input @bind="newTodo"/>
-    <button @onclick="AddTodo">Add todo</button>
+    
+    <div class="todo-grid">
+        <h2>Pending Todos</h2>
+        <div class="btns-group">
+            <button @onclick="RefreshTodoList">Refresh</button>
+            
+            <MudButton Variant="Variant.Text" Color="Color.Success" OnClick="AddTodo" >Add Todo</MudButton>
+            <button @onclick="SaveItems">Save Items</button>
+        </div>
+        <ul class="todo-list">
+            @foreach (var todo in todos){
+                <li class="todo-item">
+                    <input type="checkbox" checked=@todo.IsDone @onchange="async e => {
+                        todo.IsDone = (bool?)e.Value ?? false;
+                    }"/>
+                    <input value="@todo.Title" @onchange="async e => {
+                        todo.Title = (string?)e.Value?.ToString() ?? string.Empty;
+                    }"/>
+                    <!-- <button @onclick="() => RemoveTodo(todo)">Remove</button> -->
+                </li>
+            }
+        </ul>
+    </div>
 </AuthorizeView>
 
 
-@inject ITodoService todoService
-@inject AuthenticationStateProvider authenticationStateProvider
-@inject UserManager<ApplicationUser> userManager
-@inject IHttpContextAccessor httpContextAccessor
-
 @code {
-    private List<TodoItem> todos = new();
-
-    public string newTodo = "";
-
-    private async Task RefreshTodoList()
-    {
-        todos = await todoService.GetItemsAsync();
-    }
-
-    protected override async Task OnInitializedAsync()
-    {
-        await RefreshTodoList();
-        await base.OnInitializedAsync();
-    }
-
-    public async Task AddTodo(){
-        if (!string.IsNullOrWhiteSpace(newTodo)){
-
-            var currentState = await authenticationStateProvider.GetAuthenticationStateAsync();
-            var currentUser = await userManager.GetUserAsync(currentState.User);
-            if (currentUser?.Id == null){
-                return;
-            }
-
-            var item = new TodoItem{
-                Title = newTodo,
-                UserId = Guid.Parse(currentUser.Id),
-            };
-
-            await todoService.AddItemAsync(item);
-
-            await RefreshTodoList();
-            newTodo= string.Empty;
-        }
-    }
-
-    public async Task UpdateTodo(TodoItem item)
-    {
-        await todoService.UpdateItemAsync(item);
-        await RefreshTodoList();
-    }
-
-    public async Task RemoveTodo(TodoItem toRemove)
-    {
-        await todoService.DeleteItemAsync(toRemove.Id);
-        await RefreshTodoList();
-    }
+    
 }
