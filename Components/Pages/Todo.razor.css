@@ -29,6 +29,7 @@
     display: grid;
     grid-template-columns: auto 1fr auto;
     margin-bottom: 0.625rem;
+    align-items: center;
 }
 
 .todo-details {
@@ -43,4 +44,9 @@
 
 .todo-item:nth-child(odd) {
     background-color: aquamarine;
+}
+
+::deep .state-icon {
+    width: 24px;
+    height: 100%;
 }

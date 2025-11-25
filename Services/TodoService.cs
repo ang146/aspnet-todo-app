@@ -45,6 +45,9 @@ public class TodoService : ITodoService
 
         toUpdate.Title = item.Title;
         toUpdate.IsDone = item.IsDone;
+        toUpdate.Priority = item.Priority;
+        toUpdate.Category = item.Category;
+        toUpdate.Deadline = item.Deadline;
         _db.TodoItems.Update(toUpdate);
         await _db.SaveChangesAsync();
 

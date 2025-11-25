@@ -1,0 +1,89 @@
+﻿@using TodoApp.Enums
+@using TodoApp.Models
+
+<MudDialog>
+    <TitleContent>
+        <MudText Typo="Typo.h6">
+            @{
+                if (_isEdit)
+                {
+                    <MudIcon Icon="@Icons.Material.Filled.EditNote" Class="mr-3 mb-n1" />
+                }
+                else
+                {
+                    <MudIcon Icon = "@Icons.Material.Filled.AddBox" Class = "mr-3 mb-n1" />
+                }
+            }
+            @Title
+        </MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudTextField @bind-Value="@_title" Label="Title: " Required />
+        <MudNumericField @bind-Value="@_priority" Label="Priority: " Max="10" Min="0" Required />
+        <MudSelect @bind-Value="@_category" Label="Category: " Placeholder="Please Select" OpenIcon="@Icons.Material.Filled.Category" Required>
+            @foreach (TodoApp.Enums.Category item in Enum.GetValues(typeof(TodoApp.Enums.Category)))
+            {
+                <MudSelectItem Value="@item">@item</MudSelectItem>
+            }
+        </MudSelect>
+
+        <MudDatePicker @bind-Date="_deadline" Label="Deadline: " Editable="true" Required MinDate="@DateTime.Today"  />
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+        @{
+            if (_isEdit)
+            {
+                <MudButton Color="Color.Success" OnClick="Confirm">Update Item</MudButton>
+            }
+            else
+            {
+                <MudButton Color="Color.Success" OnClick="Confirm">Add Item</MudButton>
+            }
+        }
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter]
+    private IMudDialogInstance MudDialog { get; set; }
+
+    [Parameter]
+    public ITodoItemState Item { get; set; }
+    [Parameter]
+    public string Title { get; set; }
+
+    private string? _title { get; set; }
+    private int _priority { get; set; }
+    private Category _category { get; set; }
+    private DateTime? _deadline { get; set; } = DateTime.Today;
+    private bool _isEdit;
+
+    private void Cancel() => MudDialog.Cancel();
+
+    protected override Task OnInitializedAsync()
+    {
+        _isEdit = Item.UserId != Guid.Empty;
+
+        _title = Item.Title;
+        _priority = Item.Priority;
+        _category = Item.Category;
+        _deadline = Item.Deadline == DateTime.MinValue ? DateTime.Today : Item.Deadline;
+        return base.OnInitializedAsync();
+    }
+
+    private void Confirm()
+    {
+        if (string.IsNullOrWhiteSpace(_title))
+            return;
+
+        if (_priority <= -1)
+            return;
+
+        Item.Title = _title;
+        Item.Priority = _priority;
+        Item.Category = _category;
+        Item.Deadline = _deadline ?? DateTime.Today;
+        MudDialog.Close(DialogResult.Ok(Item));
+    }
+}

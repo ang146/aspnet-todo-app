@@ -16,29 +16,43 @@
     <div class="todo-grid">
         <h2>Pending Todos</h2>
         <div class="btns-group">
-            <button @onclick="RefreshTodoList">Refresh</button>
+            <MudButtonGroup>
+                <MudButton Variant="Variant.Filled" Color="Color.Info" StartIcon="@Icons.Material.Filled.Refresh" Onclick="RefreshTodoList">Refresh</MudButton>
+                <MudButton Variant="Variant.Filled" Color="Color.Success" OnClick="AddTodo" >Add Todo</MudButton>
+                <MudButton Variant="Variant.Filled" Color="Color.Info" StartIcon="@Icons.Material.Filled.Save"  OnClick="SaveItems">Save Items</MudButton>
+            </MudButtonGroup>
             
-            <MudButton Variant="Variant.Text" Color="Color.Success" OnClick="AddTodo" >Add Todo</MudButton>
-            <button @onclick="SaveItems">Save Items</button>
         </div>
         <ul class="todo-list">
             @foreach (var todo in todos){
                 <li class="todo-item">
-                    <input id="@todo.Id" 
-                        type="checkbox" 
-                        checked=@todo.IsDone 
-                        @onchange="async e => {
-                            todo.IsDone = (bool?)e.Value ?? false;
-                        }"
-                        />
-                    <div class="todo-details">
-                        <p>@todo.Title (Priority: @todo.Priority)</p>
-                        <p>Category: @todo.Category</p>
-                        <p>Due on: @todo.Deadline.Date</p>
-                    </div>
+                    @{
+                        switch (todo.ModificationState)
+                        {
+                            case ModificationState.None:
+                                <MudIcon Class="state-icon"/>
+                                break;
+
+                            case ModificationState.Edited:
+                                <MudIcon Icon="@Icons.Material.Filled.Edit" Class="state-icon"/>
+                                break;
+
+                            case ModificationState.Delete:
+                                <MudIcon Icon="@Icons.Material.Filled.DeleteForever" Class="state-icon" />
+                                break;
+                        }
+                    }
+                    <MudCheckBox id="@todo.Id" Color="Color.Primary" @bind-Value="@todo.IsDone" Class="item-checkbox">
+                        <div class="todo-details">
+                            <p>@todo.Title (Priority: @todo.Priority)</p>
+                            <p>Category: @todo.Category</p>
+                            <p>Due on: @todo.Deadline.Date</p>
+                        </div>
+                    </MudCheckBox>
+                    
                     <div class="action-btn-gp">
-                        <button>Edit</button>
-                        <button>Delete</button>
+                        <MudButton Variant="Variant.Filled" DropShadow="false" Color="Color.Primary" OnClick="async e=>{await EditTodo(todo);}">Edit</MudButton>
+                        <MudButton Variant="Variant.Filled" DropShadow="false" Color="Color.Warning" OnClick="async e=>{await DeleteTodo(todo);}">Delete</MudButton>
                     </div>
                 </li>
             }

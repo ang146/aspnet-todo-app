@@ -51,56 +51,67 @@ public partial class Todo : ComponentBase
         await base.OnInitializedAsync();
     }
 
-    public async Task SaveItems(){
+    public async Task SaveItems()
+    {
+        // Something to notify user saving process started, disabling UI
         foreach (var toSave in todos.Where(t => t.IsDirty))
         {
-            // Something to notify user saving process started, disabling UI
             var dto = TodoItemMapper.ToEntity(toSave);
             await TodoService.UpdateItemAsync(dto);
             toSave.SetCleanState();
-            // Release UI lock, notify user saving process ended
         }
+
+        // Release UI lock, notify user saving process ended
+        await RefreshTodoList();
+    }
+
+    public async Task EditTodo(ITodoItemState vm)
+    {
+        var title = "Editing existing Todo";
+        var parameters = new DialogParameters<TodoModificationDialog>
+        {
+            {dlg => dlg.Item, vm },
+            {dlg => dlg.Title, title }
+        };
+
+        var dialog = await DialogService.ShowAsync<TodoModificationDialog>(title, parameters);
+        var result = await dialog.Result;
+
+        if (result?.Canceled ?? true)
+            return;
+
     }
 
     public async Task AddTodo(){
         var newTodo = TodoItemFactory.CreateNewTodoItem();
 
-        var parameters = new DialogParameters<AddNewTodoDialog> { 
-            { dlg => dlg.Item, newTodo } 
+        var title = "Adding new Todo";
+        var parameters = new DialogParameters<TodoModificationDialog> { 
+            { dlg => dlg.Item, newTodo } ,
+            {dlg => dlg.Title, title }
         };
 
-        var dialog = await DialogService.ShowAsync<AddNewTodoDialog>("Add new Todo Item", parameters);
+        var dialog = await DialogService.ShowAsync<TodoModificationDialog>(title, parameters);
         var result = await dialog.Result;
 
-        if (!result?.Canceled ?? false)
-        {
-            newTodo = result.Data as ITodoItemState;
-            if (newTodo == null)
-                return;
+        if (result?.Canceled ?? true)
+            return;
 
-            var currentState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
-            var currentUser = await UserManager.GetUserAsync(currentState.User);
-            if (currentUser?.Id == null)
-            {
-                return;
-            }
-            newTodo.UserId = Guid.Parse(currentUser.Id);
+        var currentState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var currentUser = await UserManager.GetUserAsync(currentState.User);
+        if (currentUser?.Id == null)
+            return;
 
-            var dto = TodoItemMapper.ToEntity(newTodo);
-            await TodoService.AddItemAsync(dto);
-            await RefreshTodoList();
-        }
-    }
+        newTodo.UserId = Guid.Parse(currentUser.Id);
 
-    public async Task UpdateTodo(TodoItem item)
-    {
-        await TodoService.UpdateItemAsync(item);
+        /* TODO: Move to Save method. */
+        var dto = TodoItemMapper.ToEntity(newTodo);
+        await TodoService.AddItemAsync(dto);
         await RefreshTodoList();
     }
 
-    public async Task RemoveTodo(TodoItem toRemove)
+    public async Task DeleteTodo(ITodoItemState vm)
     {
-        await TodoService.DeleteItemAsync(toRemove.Id);
-        await RefreshTodoList();
+        
     }
 }

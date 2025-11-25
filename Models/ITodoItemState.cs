@@ -16,4 +16,6 @@ public interface ITodoItemState
     DateTime DateModified { get; }
     void SetCleanState();
     bool IsDirty {get;}
+    void SetDelete();
+    ModificationState ModificationState { get; }
 }
