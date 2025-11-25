@@ -5,26 +5,33 @@
 @using TodoApp.Data
 @using Microsoft.AspNetCore.Authorization
 @using TodoApp.Enums
+@using TodoApp.Utilities
 @rendermode InteractiveServer
 @attribute [Authorize]
 
 <PageTitle>Todo List</PageTitle>
 
 <AuthorizeView>
-    <h1>Hello @context.User.Identity?.Name! You have @todos.Count(t=> !t.IsDone) todos left.</h1>
+    <h1>Hello @context.User.Identity?.Name! You have @Todos.Count(t=> !t.IsDone) todos left.</h1>
     
     <div class="todo-grid">
         <h2>Pending Todos</h2>
         <div class="btns-group">
-            <MudButtonGroup>
+            <MudButtonGroup Variant="Variant.Outlined">
                 <MudButton Variant="Variant.Filled" Color="Color.Info" StartIcon="@Icons.Material.Filled.Refresh" Onclick="RefreshTodoList">Refresh</MudButton>
-                <MudButton Variant="Variant.Filled" Color="Color.Success" OnClick="AddTodo" >Add Todo</MudButton>
-                <MudButton Variant="Variant.Filled" Color="Color.Info" StartIcon="@Icons.Material.Filled.Save"  OnClick="SaveItems">Save Items</MudButton>
+                <MudButton Variant="Variant.Filled" Color="Color.Success" OnClick="AddTodo" >New Task</MudButton>
+                <MudButton Variant="Variant.Filled" Color="Color.Info" StartIcon="@Icons.Material.Filled.Save" OnClick="SaveItems">Save Tasks</MudButton>
             </MudButtonGroup>
+
+            <MudSelect @bind-Value="SortingMethod" Label="Sorting Method: " Variant="Variant.Outlined" FullWidth="false" >
+                @foreach (SortingMethod method in Enum.GetValues(typeof(SortingMethod))){
+                    <MudSelectItem Value="@method">@method.GetDescription()</MudSelectItem>
+                }
+            </MudSelect>
             
         </div>
         <ul class="todo-list">
-            @foreach (var todo in todos){
+            @foreach (var todo in Todos){
                 <li class="todo-item">
                     @{
                         switch (todo.ModificationState)

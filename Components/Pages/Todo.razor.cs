@@ -31,18 +31,54 @@ public partial class Todo : ComponentBase
     public ITodoItemMapper TodoItemMapper { get; set; }
     [Inject]
     public IDialogService DialogService { get; set; }
-  
-    private readonly List<ITodoItemState> todos = new();
+    public IEnumerable<ITodoItemState> Todos { get; private set; } = new List<ITodoItemState>();
+
+    private readonly List<ITodoItemState> _todos = new();
+    private SortingMethod _sortingMethod;
 
     private async Task RefreshTodoList()
     {
-        todos.Clear();
+        _todos.Clear();
 
         var dtos = await TodoService.GetItemsAsync();
         foreach (var dto in dtos)
         {
-            todos.Add(TodoItemMapper.ToViewModel(dto));
+            _todos.Add(TodoItemMapper.ToViewModel(dto));
         }
+        UpdateSorting();
+    }
+
+    private void UpdateSorting()
+    {
+        List<ITodoItemState> todos;
+        switch (SortingMethod) {
+            case SortingMethod.IsDone:
+                todos = _todos.OrderBy(t => t.IsDone)
+                    .ThenByDescending(t => t.Priority)
+                    .ThenBy(t => t.Title)
+                    .ToList();
+                break;
+            case SortingMethod.Alphabet:
+                todos = _todos.OrderBy(t => t.Title)
+                    .ThenByDescending(t => t.Priority)
+                    .ToList();
+                break;
+            case SortingMethod.Priority:
+                todos = _todos.OrderByDescending(t => t.Priority)
+                    .ThenBy(t=> t.Title)
+                    .ToList();
+                break;
+            case SortingMethod.Deadline:
+                todos = _todos.OrderBy(t => t.Deadline)
+                    .ThenByDescending(t => t.Priority)
+                    .ThenBy(t => t.Title)
+                    .ToList();
+                break;
+            default:
+                throw new NotImplementedException();
+        }
+
+        Todos = todos;
     }
 
     protected override async Task OnInitializedAsync()
@@ -54,7 +90,12 @@ public partial class Todo : ComponentBase
     public async Task SaveItems()
     {
         // Something to notify user saving process started, disabling UI
-        foreach (var toSave in todos.Where(t => t.IsDirty))
+        foreach (var toDelete in _todos.Where(t => t.ModificationState == ModificationState.Delete))
+        {
+            await TodoService.DeleteItemAsync(toDelete.Id);
+        }
+
+        foreach (var toSave in _todos.Where(t => t.IsDirty))
         {
             var dto = TodoItemMapper.ToEntity(toSave);
             await TodoService.UpdateItemAsync(dto);
@@ -112,6 +153,15 @@ public partial class Todo : ComponentBase
 
     public async Task DeleteTodo(ITodoItemState vm)
     {
-        
+        vm.SetDelete();
+    }
+
+    public SortingMethod SortingMethod {
+        get => _sortingMethod;
+        set
+        {
+            _sortingMethod = value;
+            UpdateSorting();
+        }
     }
 }
