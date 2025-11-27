@@ -183,6 +183,11 @@ public partial class Todo : ComponentBase
         vm.SetDelete();
     }
 
+    public void ToggleCalendar()
+    {
+        IsCalendar = !IsCalendar;
+    }
+
     public SortingMethod SortingMethod {
         get => _sortingMethod;
         set
@@ -211,4 +216,6 @@ public partial class Todo : ComponentBase
             UpdateSortingAndFiltering();
         }
     }
+
+    public bool IsCalendar { get; set; } = false;
 }

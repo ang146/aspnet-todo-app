@@ -1,0 +1,57 @@
+﻿@using TodoApp.Models
+
+<div class="calendar">
+    <header>
+        <h1>@Year.ToString() - @Month.ToString()</h1>
+    </header>
+
+    <div class="days">
+        @{
+            foreach (var weekday in Enum.GetValues(typeof(DayOfWeek)))
+            {
+                <div class="weekday">
+                    <MudText>@weekday.ToString()</MudText>
+                </div>
+            }
+
+            var today = DateTime.Today.Date;
+            var currMonth = today.Month;
+            var currYear = today.Year;
+            var lastDayOfPrevMonth = new DateTime(currYear, currMonth, 1) - TimeSpan.FromDays(1);
+            var lastDayOfPrevMonthWeekday = lastDayOfPrevMonth.DayOfWeek;
+            var currMonthLength = DateTime.DaysInMonth(currYear, currMonth);
+            var lastDayOfCurrMonth = new DateTime(currYear, currMonth, currMonthLength);
+            var lastDayOfCurrMonthWeekday = lastDayOfCurrMonth.DayOfWeek;
+
+            if (lastDayOfPrevMonthWeekday != DayOfWeek.Saturday)
+            {
+                for (int i = 0; i < (int)lastDayOfPrevMonth.DayOfWeek + 1; i++)
+                {
+                    <div class="empty day"></div>
+                }
+            }
+
+            for (int i = 0; i < currMonthLength; i++)
+            {
+                <div class="day">@(i+1)</div>
+            }
+
+            if (lastDayOfCurrMonthWeekday != DayOfWeek.Saturday)
+            {
+                for (int i = 0; i < 6 - (int)lastDayOfCurrMonthWeekday; i++)
+                {
+                    <div class="empty day"></div>
+                }
+            }
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public IEnumerable<ITodoItemState> Todos { get; set; }
+
+    public int Year { get; set; } = DateTime.Today.Year;
+    public int Month { get; set; } = DateTime.Today.Month;
+
+}

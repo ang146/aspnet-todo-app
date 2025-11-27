@@ -1,0 +1,52 @@
+﻿@using TodoApp.Enums
+@using TodoApp.Models
+<div class="list-container">
+    <ul class="todo-list">
+        @foreach (var todo in Todos)
+        {
+            <li class="todo-item">
+                @{
+                    switch (todo.ModificationState)
+                    {
+                        case ModificationState.None:
+                            <MudIcon Class="state-icon" />
+                            break;
+
+                        case ModificationState.Edited:
+                            <MudIcon Icon="@Icons.Material.Filled.Edit" Class="state-icon" />
+                            break;
+
+                        case ModificationState.Delete:
+                            <MudIcon Icon="@Icons.Material.Filled.DeleteForever" Class="state-icon" />
+                            break;
+
+                        case ModificationState.Added:
+                            <MudIcon Icon="@Icons.Material.Filled.Add" Class="state-icon" />
+                            break;
+                    }
+                }
+                <MudCheckBox id="@todo.Id" Color="Color.Primary" @bind-Value="@todo.IsDone" Class="item-checkbox">
+                    <div class="todo-details">
+                        <p>@todo.Title (Priority: @todo.Priority)</p>
+                        <p>Category: @todo.Category</p>
+                        <p>Due on: @todo.Deadline.Date</p>
+                    </div>
+                </MudCheckBox>
+
+                <div class="action-btn-gp">
+                    <MudButton Variant="Variant.Filled" DropShadow="false" Color="Color.Primary" OnClick="@(()=> OnEdit.InvokeAsync(todo))">Edit</MudButton>
+                    <MudButton Variant="Variant.Filled" DropShadow="false" Color="Color.Warning" OnClick="@(()=> OnDelete.InvokeAsync(todo))">Delete</MudButton>
+                </div>
+            </li>
+        }
+    </ul>
+</div>
+
+@code {
+    [Parameter]
+    public IEnumerable<ITodoItemState> Todos { get; set; }
+    [Parameter]
+    public EventCallback<ITodoItemState> OnEdit { get; set; }
+    [Parameter]
+    public EventCallback<ITodoItemState> OnDelete { get; set; }
+}

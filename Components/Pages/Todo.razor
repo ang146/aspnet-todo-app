@@ -19,6 +19,7 @@
                 <MudButton Variant="Variant.Filled" Color="Color.Info" StartIcon="@Icons.Material.Filled.Refresh" Onclick="RefreshTodoList">Refresh</MudButton>
                 <MudButton Variant="Variant.Filled" Color="Color.Success" OnClick="AddTodo" >New Task</MudButton>
                 <MudButton Variant="Variant.Filled" Color="Color.Info" StartIcon="@Icons.Material.Filled.Save" OnClick="SaveItems">Save Tasks</MudButton>
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="ToggleCalendar">Toggle Calendar</MudButton>
             </MudButtonGroup>
 
             <div class="sort-and-filter-group">
@@ -45,47 +46,21 @@
             
             
         </div>
-        <div class="list-container">
-            <ul class="todo-list">
-                @foreach (var todo in Todos)
-                {
-                    <li class="todo-item">
-                        @{
-                            switch (todo.ModificationState)
-                            {
-                                case ModificationState.None:
-                                    <MudIcon Class="state-icon" />
-                                    break;
 
-                                case ModificationState.Edited:
-                                    <MudIcon Icon="@Icons.Material.Filled.Edit" Class="state-icon" />
-                                    break;
+        @{
+            if (IsCalendar)
+            {
+                <TodoList Todos="Todos" 
+                    OnEdit="EditTodo"
+                    OnDelete="DeleteTodo"></TodoList>
+            }
+            else
+            {
+                <TodoCalendar Todos="Todos"></TodoCalendar>
+            }
+        }
 
-                                case ModificationState.Delete:
-                                    <MudIcon Icon="@Icons.Material.Filled.DeleteForever" Class="state-icon" />
-                                    break;
 
-                                case ModificationState.Added:
-                                    <MudIcon Icon="@Icons.Material.Filled.Add" Class="state-icon" />
-                                    break;
-                            }
-                        }
-                        <MudCheckBox id="@todo.Id" Color="Color.Primary" @bind-Value="@todo.IsDone" Class="item-checkbox">
-                            <div class="todo-details">
-                                <p>@todo.Title (Priority: @todo.Priority)</p>
-                                <p>Category: @todo.Category</p>
-                                <p>Due on: @todo.Deadline.Date</p>
-                            </div>
-                        </MudCheckBox>
-
-                        <div class="action-btn-gp">
-                            <MudButton Variant="Variant.Filled" DropShadow="false" Color="Color.Primary" OnClick="async e =>{ await EditTodo(todo); }">Edit</MudButton>
-                            <MudButton Variant="Variant.Filled" DropShadow="false" Color="Color.Warning" OnClick="e => { DeleteTodo(todo); }">Delete</MudButton>
-                        </div>
-                    </li>
-                }
-            </ul>
-        </div>
     </main>
 </AuthorizeView>
 

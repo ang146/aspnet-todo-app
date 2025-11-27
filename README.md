@@ -1,10 +1,10 @@
 # Todo App
 This is a Todo App built in C# ASP.NET with Blazor and MudBlazor, providing simple todo tasks management.\
 Features:
-* allowing users to add, edit, and delete tasks\
-* filtering by status and category\
-* sorting by properties\
-* save tasks by user\
+* allowing users to add, edit, and delete tasks
+* filtering by status and category
+* sorting by properties
+* save tasks by user
 
 ## Installation
 
