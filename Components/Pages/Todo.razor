@@ -12,59 +12,81 @@
 <PageTitle>Todo List</PageTitle>
 
 <AuthorizeView>
-    <h1>Hello @context.User.Identity?.Name! You have @Todos.Count(t=> !t.IsDone) todos left.</h1>
-    
-    <div class="todo-grid">
-        <h2>Pending Todos</h2>
-        <div class="btns-group">
+    <main class="container">
+        <h1>Hello @context.User.Identity?.Name! You have @Todos.Count(t => !t.IsDone) todos left.</h1>
+        <div class="operation-btns-group">
             <MudButtonGroup Variant="Variant.Outlined">
                 <MudButton Variant="Variant.Filled" Color="Color.Info" StartIcon="@Icons.Material.Filled.Refresh" Onclick="RefreshTodoList">Refresh</MudButton>
                 <MudButton Variant="Variant.Filled" Color="Color.Success" OnClick="AddTodo" >New Task</MudButton>
                 <MudButton Variant="Variant.Filled" Color="Color.Info" StartIcon="@Icons.Material.Filled.Save" OnClick="SaveItems">Save Tasks</MudButton>
             </MudButtonGroup>
 
-            <MudSelect @bind-Value="SortingMethod" Label="Sorting Method: " Variant="Variant.Outlined" FullWidth="false" >
-                @foreach (SortingMethod method in Enum.GetValues(typeof(SortingMethod))){
-                    <MudSelectItem Value="@method">@method.GetDescription()</MudSelectItem>
-                }
-            </MudSelect>
+            <div class="sort-and-filter-group">
+                <MudCheckBox Color="Color.Primary" @bind-Value="HideDone" Class="item-checkbox">
+                    Hide Checked Task
+                </MudCheckBox>
+
+                <MudSelect @bind-Value="SortingMethod" Label="Sorting Method: " Variant="Variant.Outlined" FullWidth="false">
+                    @foreach (SortingMethod method in Enum.GetValues(typeof(SortingMethod)))
+                    {
+                        <MudSelectItem Value="@method">@method.GetDescription()</MudSelectItem>
+                    }
+                </MudSelect>
+
+                <MudSelect @bind-Value="ShowCategory" Label="Display Category: " Variant="Variant.Outlined" FullWidth="false">
+                    <MudSelectItem Value="string.Empty">Display All</MudSelectItem>
+                    @foreach (Category category in Enum.GetValues(typeof(Category)))
+                    {
+                        <MudSelectItem Value="@category.ToString()">@category.GetDescription()</MudSelectItem>
+                    }
+                </MudSelect>
+            </div>
+
+            
             
         </div>
-        <ul class="todo-list">
-            @foreach (var todo in Todos){
-                <li class="todo-item">
-                    @{
-                        switch (todo.ModificationState)
-                        {
-                            case ModificationState.None:
-                                <MudIcon Class="state-icon"/>
-                                break;
+        <div class="list-container">
+            <ul class="todo-list">
+                @foreach (var todo in Todos)
+                {
+                    <li class="todo-item">
+                        @{
+                            switch (todo.ModificationState)
+                            {
+                                case ModificationState.None:
+                                    <MudIcon Class="state-icon" />
+                                    break;
 
-                            case ModificationState.Edited:
-                                <MudIcon Icon="@Icons.Material.Filled.Edit" Class="state-icon"/>
-                                break;
+                                case ModificationState.Edited:
+                                    <MudIcon Icon="@Icons.Material.Filled.Edit" Class="state-icon" />
+                                    break;
 
-                            case ModificationState.Delete:
-                                <MudIcon Icon="@Icons.Material.Filled.DeleteForever" Class="state-icon" />
-                                break;
+                                case ModificationState.Delete:
+                                    <MudIcon Icon="@Icons.Material.Filled.DeleteForever" Class="state-icon" />
+                                    break;
+
+                                case ModificationState.Added:
+                                    <MudIcon Icon="@Icons.Material.Filled.Add" Class="state-icon" />
+                                    break;
+                            }
                         }
-                    }
-                    <MudCheckBox id="@todo.Id" Color="Color.Primary" @bind-Value="@todo.IsDone" Class="item-checkbox">
-                        <div class="todo-details">
-                            <p>@todo.Title (Priority: @todo.Priority)</p>
-                            <p>Category: @todo.Category</p>
-                            <p>Due on: @todo.Deadline.Date</p>
+                        <MudCheckBox id="@todo.Id" Color="Color.Primary" @bind-Value="@todo.IsDone" Class="item-checkbox">
+                            <div class="todo-details">
+                                <p>@todo.Title (Priority: @todo.Priority)</p>
+                                <p>Category: @todo.Category</p>
+                                <p>Due on: @todo.Deadline.Date</p>
+                            </div>
+                        </MudCheckBox>
+
+                        <div class="action-btn-gp">
+                            <MudButton Variant="Variant.Filled" DropShadow="false" Color="Color.Primary" OnClick="async e =>{ await EditTodo(todo); }">Edit</MudButton>
+                            <MudButton Variant="Variant.Filled" DropShadow="false" Color="Color.Warning" OnClick="e => { DeleteTodo(todo); }">Delete</MudButton>
                         </div>
-                    </MudCheckBox>
-                    
-                    <div class="action-btn-gp">
-                        <MudButton Variant="Variant.Filled" DropShadow="false" Color="Color.Primary" OnClick="async e=>{await EditTodo(todo);}">Edit</MudButton>
-                        <MudButton Variant="Variant.Filled" DropShadow="false" Color="Color.Warning" OnClick="async e=>{await DeleteTodo(todo);}">Delete</MudButton>
-                    </div>
-                </li>
-            }
-        </ul>
-    </div>
+                    </li>
+                }
+            </ul>
+        </div>
+    </main>
 </AuthorizeView>
 
 

@@ -99,6 +99,9 @@ public class TodoItemState : ITodoItemState
             if (_isDelete)
                 return ModificationState.Delete;
 
+            if (Id == 0)
+                return ModificationState.Added;
+
             if (IsDirty)
                 return ModificationState.Edited;
 

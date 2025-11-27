@@ -2,8 +2,10 @@
 {
     public enum ModificationState
     {
-        None = 0,
-        Edited = 1,
-        Delete = 2,
+        None,
+        Edited,
+        Delete,
+        Added,
+        Error
     }
 }

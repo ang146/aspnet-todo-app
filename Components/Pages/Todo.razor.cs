@@ -35,6 +35,8 @@ public partial class Todo : ComponentBase
 
     private readonly List<ITodoItemState> _todos = new();
     private SortingMethod _sortingMethod;
+    private bool _hideDone = false;
+    private string _showCategory = string.Empty;
 
     private async Task RefreshTodoList()
     {
@@ -45,31 +47,44 @@ public partial class Todo : ComponentBase
         {
             _todos.Add(TodoItemMapper.ToViewModel(dto));
         }
-        UpdateSorting();
+        UpdateSortingAndFiltering();
     }
 
-    private void UpdateSorting()
+    private void UpdateSortingAndFiltering()
     {
         List<ITodoItemState> todos;
+
+        var filteredTodos = _todos.ToList();
+        if (HideDone)
+        {
+            filteredTodos.RemoveAll(t => t.IsDone);
+        }
+
+        if (!string.IsNullOrWhiteSpace(ShowCategory))
+        {
+            Category category = Enum.Parse<Category>(ShowCategory);
+            filteredTodos = filteredTodos.Where(t => t.Category == category).ToList();
+        }
+
         switch (SortingMethod) {
             case SortingMethod.IsDone:
-                todos = _todos.OrderBy(t => t.IsDone)
+                todos = filteredTodos.OrderBy(t => t.IsDone)
                     .ThenByDescending(t => t.Priority)
                     .ThenBy(t => t.Title)
                     .ToList();
                 break;
             case SortingMethod.Alphabet:
-                todos = _todos.OrderBy(t => t.Title)
+                todos = filteredTodos.OrderBy(t => t.Title)
                     .ThenByDescending(t => t.Priority)
                     .ToList();
                 break;
             case SortingMethod.Priority:
-                todos = _todos.OrderByDescending(t => t.Priority)
+                todos = filteredTodos.OrderByDescending(t => t.Priority)
                     .ThenBy(t=> t.Title)
                     .ToList();
                 break;
             case SortingMethod.Deadline:
-                todos = _todos.OrderBy(t => t.Deadline)
+                todos = filteredTodos.OrderBy(t => t.Deadline)
                     .ThenByDescending(t => t.Priority)
                     .ThenBy(t => t.Title)
                     .ToList();
@@ -95,7 +110,14 @@ public partial class Todo : ComponentBase
             await TodoService.DeleteItemAsync(toDelete.Id);
         }
 
-        foreach (var toSave in _todos.Where(t => t.IsDirty))
+        foreach (var toAdd in _todos.Where(t=>t.ModificationState == ModificationState.Added))
+        {
+            var dto = TodoItemMapper.ToEntity(toAdd);
+            await TodoService.AddItemAsync(dto);
+            toAdd.SetCleanState();
+        }
+
+        foreach (var toSave in _todos.Where(t => t.ModificationState == ModificationState.Edited))
         {
             var dto = TodoItemMapper.ToEntity(toSave);
             await TodoService.UpdateItemAsync(dto);
@@ -145,14 +167,19 @@ public partial class Todo : ComponentBase
 
         newTodo.UserId = Guid.Parse(currentUser.Id);
 
-        /* TODO: Move to Save method. */
-        var dto = TodoItemMapper.ToEntity(newTodo);
-        await TodoService.AddItemAsync(dto);
-        await RefreshTodoList();
+        _todos.Add(newTodo);
+        UpdateSortingAndFiltering();
     }
 
-    public async Task DeleteTodo(ITodoItemState vm)
+    public void DeleteTodo(ITodoItemState vm)
     {
+        if (vm.ModificationState == ModificationState.Added)
+        {
+            _todos.Remove(vm);
+            UpdateSortingAndFiltering();
+            return;
+        }
+
         vm.SetDelete();
     }
 
@@ -161,7 +188,27 @@ public partial class Todo : ComponentBase
         set
         {
             _sortingMethod = value;
-            UpdateSorting();
+            UpdateSortingAndFiltering();
+        }
+    }
+
+    public bool HideDone
+    {
+        get => _hideDone;
+        set
+        {
+            _hideDone = value;
+            UpdateSortingAndFiltering();
+        }
+    }
+
+    public string ShowCategory
+    {
+        get => _showCategory;
+        set
+        {
+            _showCategory = value;
+            UpdateSortingAndFiltering();
         }
     }
 }

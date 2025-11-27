@@ -8,10 +8,22 @@
     margin: 10px;
 }
 
+.container {
+    display: grid;
+    grid-template-rows: auto auto 1fr;
+    height: 90vh;
+}
+
+.list-container {
+    height: 100%;
+    min-height: 0;
+}
+
 .todo-list {
+    height: 100%;
     list-style-type: none;
     padding: 0;
-    overflow-y: scroll;
+    overflow-y: auto;
 }
 
 .action-btn-gp {
