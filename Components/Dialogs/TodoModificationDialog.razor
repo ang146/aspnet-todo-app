@@ -1,5 +1,7 @@
 ﻿@using TodoApp.Enums
+@using TodoApp.Factories
 @using TodoApp.Models
+@inject ITodoItemFactory todoItemFactory
 
 <MudDialog>
     <TitleContent>
@@ -49,7 +51,7 @@
     private IMudDialogInstance MudDialog { get; set; }
 
     [Parameter]
-    public ITodoItemState Item { get; set; }
+    public ITodoItemState? Item { get; set; }
     [Parameter]
     public string Title { get; set; }
 
@@ -63,6 +65,11 @@
 
     protected override Task OnInitializedAsync()
     {
+        if (Item == null)
+        {
+            Item = todoItemFactory.CreateNewTodoItem();
+        }
+
         _isEdit = Item.UserId != Guid.Empty;
 
         _title = Item.Title;

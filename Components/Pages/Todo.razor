@@ -24,7 +24,10 @@
 
             <div class="sort-and-filter-group">
                 <MudCheckBox Color="Color.Primary" @bind-Value="HideDone" Class="item-checkbox">
-                    Hide Checked Task
+                    Hide Checked Tasks
+                </MudCheckBox>
+                <MudCheckBox Color="Color.Primary" @bind-Value="HideOverdue" Class="item-checkbox">
+                    Hide Overdue Tasks
                 </MudCheckBox>
 
                 <MudSelect @bind-Value="SortingMethod" Label="Sorting Method: " Variant="Variant.Outlined" FullWidth="false">
@@ -56,7 +59,9 @@
             }
             else
             {
-                <TodoCalendar Todos="Todos"></TodoCalendar>
+                <TodoCalendar Todos="Todos"
+                    OnEdit="EditTodo"
+                    OnDelete="DeleteTodo"></TodoCalendar>
             }
         }
 

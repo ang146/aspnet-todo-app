@@ -1,131 +1,38 @@
 using Microsoft.AspNetCore.Components;
-using Microsoft.AspNetCore.Components.Authorization;
-using Microsoft.AspNetCore.Hosting.Server;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.JSInterop;
 using MudBlazor;
-using System;
 using TodoApp.Components.Dialogs;
-using TodoApp.Data;
 using TodoApp.Enums;
 using TodoApp.Factories;
-using TodoApp.Mappers;
 using TodoApp.Models;
-using TodoApp.Services;
+using TodoApp.ViewModels.Pages;
 
 namespace TodoApp.Components.Pages;
 
 public partial class Todo : ComponentBase
 {
     [Inject]
-    public ITodoService TodoService { get; set; }
-    [Inject]
-    public AuthenticationStateProvider AuthenticationStateProvider { get; set; }
-    [Inject]
-    public UserManager<ApplicationUser> UserManager { get; set; }
-    [Inject]
-    public IHttpContextAccessor HttpContextAccessor { get; set; }
-    [Inject]
-    public ITodoItemFactory TodoItemFactory { get; set; }
-    [Inject]
-    public ITodoItemMapper TodoItemMapper { get; set; }
-    [Inject]
     public IDialogService DialogService { get; set; }
-    public IEnumerable<ITodoItemState> Todos { get; private set; } = new List<ITodoItemState>();
+    [Inject]
+    public ITodoPageViewModel ViewModel { get; set; }
 
-    private readonly List<ITodoItemState> _todos = new();
-    private SortingMethod _sortingMethod;
-    private bool _hideDone = false;
-    private string _showCategory = string.Empty;
+    public IEnumerable<ITodoItemState> Todos => ViewModel.Todos;
 
     private async Task RefreshTodoList()
     {
-        _todos.Clear();
-
-        var dtos = await TodoService.GetItemsAsync();
-        foreach (var dto in dtos)
-        {
-            _todos.Add(TodoItemMapper.ToViewModel(dto));
-        }
-        UpdateSortingAndFiltering();
-    }
-
-    private void UpdateSortingAndFiltering()
-    {
-        List<ITodoItemState> todos;
-
-        var filteredTodos = _todos.ToList();
-        if (HideDone)
-        {
-            filteredTodos.RemoveAll(t => t.IsDone);
-        }
-
-        if (!string.IsNullOrWhiteSpace(ShowCategory))
-        {
-            Category category = Enum.Parse<Category>(ShowCategory);
-            filteredTodos = filteredTodos.Where(t => t.Category == category).ToList();
-        }
-
-        switch (SortingMethod) {
-            case SortingMethod.IsDone:
-                todos = filteredTodos.OrderBy(t => t.IsDone)
-                    .ThenByDescending(t => t.Priority)
-                    .ThenBy(t => t.Title)
-                    .ToList();
-                break;
-            case SortingMethod.Alphabet:
-                todos = filteredTodos.OrderBy(t => t.Title)
-                    .ThenByDescending(t => t.Priority)
-                    .ToList();
-                break;
-            case SortingMethod.Priority:
-                todos = filteredTodos.OrderByDescending(t => t.Priority)
-                    .ThenBy(t=> t.Title)
-                    .ToList();
-                break;
-            case SortingMethod.Deadline:
-                todos = filteredTodos.OrderBy(t => t.Deadline)
-                    .ThenByDescending(t => t.Priority)
-                    .ThenBy(t => t.Title)
-                    .ToList();
-                break;
-            default:
-                throw new NotImplementedException();
-        }
-
-        Todos = todos;
+        await ViewModel.RefreshTodoListAsync();
     }
 
     protected override async Task OnInitializedAsync()
     {
-        await RefreshTodoList();
+        await ViewModel.RefreshTodoListAsync();
         await base.OnInitializedAsync();
     }
 
     public async Task SaveItems()
     {
         // Something to notify user saving process started, disabling UI
-        foreach (var toDelete in _todos.Where(t => t.ModificationState == ModificationState.Delete))
-        {
-            await TodoService.DeleteItemAsync(toDelete.Id);
-        }
-
-        foreach (var toAdd in _todos.Where(t=>t.ModificationState == ModificationState.Added))
-        {
-            var dto = TodoItemMapper.ToEntity(toAdd);
-            await TodoService.AddItemAsync(dto);
-            toAdd.SetCleanState();
-        }
-
-        foreach (var toSave in _todos.Where(t => t.ModificationState == ModificationState.Edited))
-        {
-            var dto = TodoItemMapper.ToEntity(toSave);
-            await TodoService.UpdateItemAsync(dto);
-            toSave.SetCleanState();
-        }
-
+        await ViewModel.SaveTasks();
         // Release UI lock, notify user saving process ended
-        await RefreshTodoList();
     }
 
     public async Task EditTodo(ITodoItemState vm)
@@ -138,19 +45,13 @@ public partial class Todo : ComponentBase
         };
 
         var dialog = await DialogService.ShowAsync<TodoModificationDialog>(title, parameters);
-        var result = await dialog.Result;
-
-        if (result?.Canceled ?? true)
-            return;
-
+        await dialog.Result;
     }
 
     public async Task AddTodo(){
-        var newTodo = TodoItemFactory.CreateNewTodoItem();
-
         var title = "Adding new Todo";
         var parameters = new DialogParameters<TodoModificationDialog> { 
-            { dlg => dlg.Item, newTodo } ,
+            { dlg => dlg.Item, null } ,
             {dlg => dlg.Title, title }
         };
 
@@ -160,62 +61,46 @@ public partial class Todo : ComponentBase
         if (result?.Canceled ?? true)
             return;
 
-        var currentState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
-        var currentUser = await UserManager.GetUserAsync(currentState.User);
-        if (currentUser?.Id == null)
+        var newTodo = result.Data as ITodoItemState;
+        if (newTodo == null)
             return;
 
-        newTodo.UserId = Guid.Parse(currentUser.Id);
-
-        _todos.Add(newTodo);
-        UpdateSortingAndFiltering();
+        await ViewModel.AddTask(newTodo);
     }
 
     public void DeleteTodo(ITodoItemState vm)
     {
-        if (vm.ModificationState == ModificationState.Added)
-        {
-            _todos.Remove(vm);
-            UpdateSortingAndFiltering();
-            return;
-        }
-
-        vm.SetDelete();
+        ViewModel.DeleteTask(vm);
     }
 
     public void ToggleCalendar()
     {
-        IsCalendar = !IsCalendar;
+        ViewModel.ToggleCalendar();
     }
 
-    public SortingMethod SortingMethod {
-        get => _sortingMethod;
-        set
-        {
-            _sortingMethod = value;
-            UpdateSortingAndFiltering();
-        }
-    }
+    public bool IsCalendar => ViewModel.IsCalendar;
 
+    public SortingMethod SortingMethod
+    {
+        get => ViewModel.SortingMethod;
+        set => ViewModel.SortingMethod = value;
+    }
+    
     public bool HideDone
     {
-        get => _hideDone;
-        set
-        {
-            _hideDone = value;
-            UpdateSortingAndFiltering();
-        }
+        get => ViewModel.HideDone;
+        set => ViewModel.HideDone = value;
+    }
+
+    public bool HideOverdue
+    {
+        get => ViewModel.HideOverdue;
+        set => ViewModel.HideOverdue = value;
     }
 
     public string ShowCategory
     {
-        get => _showCategory;
-        set
-        {
-            _showCategory = value;
-            UpdateSortingAndFiltering();
-        }
+        get => ViewModel.ShowCategory;
+        set => ViewModel.ShowCategory = value;
     }
-
-    public bool IsCalendar { get; set; } = false;
 }

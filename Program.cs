@@ -9,6 +9,7 @@ using TodoApp.Mappers;
 using TodoApp.Models;
 using TodoApp.Services;
 using MudBlazor.Services;
+using TodoApp.ViewModels.Pages;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -43,6 +44,7 @@ builder.Services.AddScoped<ITodoService, TodoService>();
 builder.Services.AddScoped<ITodoItemMapper, TodoItemMapper>();
 builder.Services.AddScoped<ITodoItemState, TodoItemState>();
 builder.Services.AddScoped<ITodoItemFactory, TodoItemFactory>();
+builder.Services.AddScoped<ITodoPageViewModel, TodoPageViewModel>();
 
 builder.Services.AddMudServices();
 

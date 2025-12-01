@@ -2,7 +2,11 @@
 
 <div class="calendar">
     <header>
-        <h1>@Year.ToString() - @Month.ToString()</h1>
+        <MudButton StartIcon="@Icons.Material.Filled.ChevronLeft" OnClick="PrevMonth"></MudButton>
+        <div class="year-picker">
+            <h1>@Year.ToString() - @Month.ToString()</h1>
+        </div>
+        <MudButton StartIcon="@Icons.Material.Filled.ChevronRight" OnClick="NextMonth"></MudButton>
     </header>
 
     <div class="days">
@@ -15,12 +19,10 @@
             }
 
             var today = DateTime.Today.Date;
-            var currMonth = today.Month;
-            var currYear = today.Year;
-            var lastDayOfPrevMonth = new DateTime(currYear, currMonth, 1) - TimeSpan.FromDays(1);
+            var lastDayOfPrevMonth = new DateTime(Year, Month, 1) - TimeSpan.FromDays(1);
             var lastDayOfPrevMonthWeekday = lastDayOfPrevMonth.DayOfWeek;
-            var currMonthLength = DateTime.DaysInMonth(currYear, currMonth);
-            var lastDayOfCurrMonth = new DateTime(currYear, currMonth, currMonthLength);
+            var currMonthLength = DateTime.DaysInMonth(Year, Month);
+            var lastDayOfCurrMonth = new DateTime(Year, Month, currMonthLength);
             var lastDayOfCurrMonthWeekday = lastDayOfCurrMonth.DayOfWeek;
 
             if (lastDayOfPrevMonthWeekday != DayOfWeek.Saturday)
@@ -33,7 +35,27 @@
 
             for (int i = 0; i < currMonthLength; i++)
             {
-                <div class="day">@(i+1)</div>
+                <div class="day">
+                    <span>@(i+1)</span>
+                    <div class="tasks-contaienr">
+                        <ul>
+                            @foreach (var todo in Todos.Where(t => t.Deadline.Year == Year && t.Deadline.Month == Month && t.Deadline.Day == i+1))
+                            {
+                                <li class="in-task">
+                                    <MudCheckBox Color="Color.Primary" @bind-Value="@todo.IsDone" Class="item-checkbox" Dense="true"></MudCheckBox>
+                                    <MudMenu Class="task-menu" Label="@todo.Title" StartIcon="">
+                                        <p>@todo.Title</p>
+                                        <p>Priority: @todo.Priority</p>
+                                        <p>Category: @todo.Category</p>
+                                        <p>Deadline: @todo.Deadline.Date</p>
+                                        <MudButton Variant="Variant.Filled" DropShadow="false" Color="Color.Primary" OnClick="@(() => OnEdit.InvokeAsync(todo))">Edit</MudButton>
+                                        <MudButton Variant="Variant.Filled" DropShadow="false" Color="Color.Warning" OnClick="@(() => OnDelete.InvokeAsync(todo))">Delete</MudButton>
+                                    </MudMenu>
+                                </li>
+                            }
+                        </ul>
+                    </div>
+                </div>
             }
 
             if (lastDayOfCurrMonthWeekday != DayOfWeek.Saturday)
@@ -45,13 +67,46 @@
             }
         }
     </div>
+    <div class="task-details">
+
+    </div>
 </div>
 
 @code {
     [Parameter]
     public IEnumerable<ITodoItemState> Todos { get; set; }
+    [Parameter]
+    public EventCallback<ITodoItemState> OnEdit { get; set; }
+    [Parameter]
+    public EventCallback<ITodoItemState> OnDelete { get; set; }
 
     public int Year { get; set; } = DateTime.Today.Year;
     public int Month { get; set; } = DateTime.Today.Month;
 
+    public ITodoItemState SelectedTask { get; set; }
+
+
+    private void PrevMonth(MouseEventArgs args)
+    {
+        if (Month <= 1)
+        {
+            Month = 12;
+            Year--;
+            return;
+        }
+
+        Month--;
+
+    }
+    private void NextMonth(MouseEventArgs args)
+    {
+        if (Month >= 12)
+        {
+            Month = 1;
+            Year++;
+            return;
+        }
+
+        Month++;
+    }
 }
