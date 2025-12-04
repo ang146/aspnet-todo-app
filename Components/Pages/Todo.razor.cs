@@ -24,7 +24,7 @@ public partial class Todo : ComponentBase
 
     protected override async Task OnInitializedAsync()
     {
-        await ViewModel.RefreshTodoListAsync();
+        await ViewModel.InitialiseAsync();
         await base.OnInitializedAsync();
     }
 

@@ -1,13 +1,6 @@
-﻿using Microsoft.AspNetCore.Components;
-using Microsoft.AspNetCore.Components.Authorization;
-using Microsoft.AspNetCore.Identity;
-using MudBlazor;
-using System.Globalization;
-using TodoApp.Components.Dialogs;
-using TodoApp.Components.Pages;
-using TodoApp.Data;
+﻿using MudBlazor;
 using TodoApp.Enums;
-using TodoApp.Factories;
+using TodoApp.Managers;
 using TodoApp.Mappers;
 using TodoApp.Models;
 using TodoApp.Services;
@@ -17,24 +10,22 @@ namespace TodoApp.ViewModels.Pages
     public class TodoPageViewModel : ITodoPageViewModel
     {
         private readonly ITodoService _todoService;
-        private readonly AuthenticationStateProvider _authenticationStateProvider;
-        private readonly UserManager<ApplicationUser> _userManager;
-        private readonly ITodoItemFactory _todoItemFactory;
         private readonly ITodoItemMapper _todoItemMapper;
+        private readonly IUserManager _userManager;
 
         public TodoPageViewModel(ITodoService todoService,
-            AuthenticationStateProvider authenticationStateProvider,
-            UserManager<ApplicationUser> userManager,
-            ITodoItemFactory todoItemFactory,
-            ITodoItemMapper todoItemMapper)
+            ITodoItemMapper todoItemMapper,
+            IUserManager userManager)
         {
             _todoService = todoService;
-            _authenticationStateProvider = authenticationStateProvider;
             _userManager = userManager;
-            _todoItemFactory = todoItemFactory;
             _todoItemMapper = todoItemMapper;
         }
 
+        public async Task InitialiseAsync()
+        {
+            await RefreshTodoListAsync();
+        }
 
         public async Task RefreshTodoListAsync()
         {
@@ -152,12 +143,8 @@ namespace TodoApp.ViewModels.Pages
 
         public async Task AddTask(ITodoItemState vm)
         {
-            var currentState = await _authenticationStateProvider.GetAuthenticationStateAsync();
-            var currentUser = await _userManager.GetUserAsync(currentState.User);
-            if (currentUser?.Id == null)
-                return;
-
-            vm.UserId = Guid.Parse(currentUser.Id);
+            var userId = await _userManager.GetCurrentUserIdByStateAsync();
+            vm.UserId = userId;
 
             _todos.Add(vm);
             UpdateSortingAndFiltering();

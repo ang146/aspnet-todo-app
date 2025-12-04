@@ -1,33 +1,27 @@
-using System.Security.Claims;
 using Microsoft.EntityFrameworkCore;
 using TodoApp.Data;
+using TodoApp.Managers;
 
 namespace TodoApp.Services;
 
 public class TodoService : ITodoService
 {
     private readonly ApplicationDbContext _db;
-    private readonly IHttpContextAccessor _httpContextAccessor;
-    public TodoService(ApplicationDbContext db, IHttpContextAccessor httpContextAccessor)
+    private readonly IUserManager _userManager;
+    public TodoService(ApplicationDbContext db, IUserManager userManager)
     {
         _db = db;
-        _httpContextAccessor = httpContextAccessor;
+        _userManager = userManager;
     }
 
     public async Task<List<TodoItem>> GetItemsAsync()
     {
-        var user = _httpContextAccessor.HttpContext?.User;
-        if (user == null)
+        var userId = _userManager.GetCurrentUserIdByHttpContext();
+        if (userId == Guid.Empty)
         {
             return new List<TodoItem>();
         }
 
-        var userIdS = user.FindFirstValue(ClaimTypes.NameIdentifier);
-        var success = Guid.TryParse(userIdS, out var userId);
-        if (!success)
-        {
-            return new List<TodoItem>();
-        }
         return await _db.TodoItems.Where(t => t.UserId == userId).ToListAsync();
     }
 

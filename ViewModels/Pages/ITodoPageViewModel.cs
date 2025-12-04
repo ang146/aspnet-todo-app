@@ -5,6 +5,7 @@ namespace TodoApp.ViewModels.Pages
 {
     public interface ITodoPageViewModel
     {
+        Task InitialiseAsync();
         Task RefreshTodoListAsync();
         Task SaveTasks();
         Task DeleteTask(ITodoItemState vm);
